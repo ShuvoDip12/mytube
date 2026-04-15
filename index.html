@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StreamTube Pro Auto</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#0b0b0b;color:white}
+.navbar{display:flex;gap:10px;align-items:center;padding:10px;background:#000}
+.logo{color:red;font-size:20px;font-weight:bold}
+.search{flex:1;padding:8px;border-radius:5px;border:none}
+.categories{display:flex;gap:10px;padding:10px;overflow:auto}
+.cat{background:#222;padding:6px 12px;border-radius:20px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:8px}
+.video{background:#111;border-radius:8px;overflow:hidden;cursor:pointer;transition:0.3s}
+.video:hover{transform:scale(1.04)}
+.video img{width:100%;height:130px;object-fit:cover}
+.title{padding:5px;font-size:12px}
+
+#player{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:none;flex-direction:column;z-index:1000}
+iframe{width:100%;height:85%;border:none}
+.controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px}
+button{padding:8px;background:red;color:white;border:none;border-radius:5px;cursor:pointer}
+
+#adOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:black;display:none;justify-content:center;align-items:center;flex-direction:column;z-index:2000;text-align:center;padding:20px}
+#adOverlay button{margin-top:20px;background:green}
+
+@media (max-width:768px){
+.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">🎬 StreamTube Pro</div>
+<button onclick="showHome()">Home</button>
+<button onclick="showLiveTV()">Live TV</button>
+<input id="search" class="search" placeholder="Search videos...">
+</div>
+
+<div class="categories">
+<div class="cat" onclick="setCategory('all')">All</div>
+<div class="cat" onclick="setCategory('music')">Music</div>
+<div class="cat" onclick="setCategory('tech')">Tech</div>
+<div class="cat" onclick="setCategory('fun')">Fun</div>
+</div>
+
+<div class="grid" id="videoGrid"></div>
+
+<div id="player">
+<iframe id="ytplayer" allow="autoplay; fullscreen"></iframe>
+<div class="controls">
+<button onclick="prevVideo()">Prev</button>
+<button onclick="downloadVideo()">Download</button>
+<button onclick="closePlayer()">Close</button>
+<button onclick="nextVideo()">Next ▶</button>
+</div>
+</div>
+
+<div id="adOverlay">
+<h2>Advertisement</h2>
+<p>Ad will close in 5 seconds...</p>
+<button id="skipBtn" onclick="closeAd()" style="display:none">Skip Ad</button>
+</div>
+
+<script>
+
+// ========= DATA =========
+
+const YT_IDS = [
+"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","7pArhkQ9Q_g","4jtbe0I1e1c","e1-5kFNbNWc","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0"
+];
+
+const DRIVE_VIDEOS = [
+{ id:'AAA111', title:'Drive Movie 1', cat:'fun' },
+{ id:'BBB222', title:'Drive Movie 2', cat:'tech' }
+];
+
+const IPTV_STREAMS = [
+{ url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", title:"Live TV Demo", cat:"fun" }
+];
+
+// ========= MASTER LIST =========
+
+let homeVideos = [];
+let liveVideos = [];
+let videos = [];
+let filtered = [];
+let currentIndex = 0;
+let currentCategory = "all";
+
+// ========= LOAD DATA =========
+
+async function loadYouTube(){
+for(const id of YT_IDS){
+let res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+let data = await res.json();
+
+homeVideos.push({
+type:'yt',
+id,
+title:data.title,
+cat:'music',
+thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+});
+}
+}
+
+function loadDrive(){
+DRIVE_VIDEOS.forEach(v=>{
+homeVideos.push({
+type:'drive',
+id:v.id,
+title:v.title,
+cat:v.cat,
+thumb:'https://i.ibb.co/3WZQ9kG/video.png'
+});
+});
+}
+
+function loadIPTV(){
+IPTV_STREAMS.forEach(v=>{
+liveVideos.push({
+type:'iptv',
+url:v.url,
+title:v.title,
+cat:v.cat,
+thumb:'https://i.ibb.co/3WZQ9kG/video.png'
+});
+});
+}
+
+// ========= MODE SWITCH =========
+
+function showHome(){
+videos = homeVideos;
+applyFilters();
+}
+
+function showLiveTV(){
+videos = liveVideos;
+applyFilters();
+}
+
+// ========= FILTER =========
+
+function applyFilters(){
+let search = document.getElementById('search').value.toLowerCase();
+
+filtered = videos.filter(v=>{
+let matchCategory = (currentCategory==='all' || v.cat===currentCategory);
+let matchSearch = v.title.toLowerCase().includes(search) || v.cat.toLowerCase().includes(search);
+return matchCategory && matchSearch;
+});
+
+render();
+}
+
+function setCategory(c){
+currentCategory = c;
+applyFilters();
+}
+
+document.getElementById('search').addEventListener('input',applyFilters);
+
+// ========= RENDER =========
+
+function render(){
+let grid=document.getElementById('videoGrid');
+grid.innerHTML='';
+
+filtered.forEach((v,i)=>{
+let div=document.createElement('div');
+div.className='video';
+div.innerHTML=`<img src="${v.thumb}"><div class="title">${v.title}</div>`;
+div.onclick=()=>playVideo(i);
+grid.appendChild(div);
+});
+}
+
+// ========= PLAYER =========
+
+function startVideo(i){
+currentIndex=i;
+document.getElementById('player').style.display='flex';
+
+let v=filtered[i];
+let url='';
+
+if(v.type==='yt'){
+url=`https://www.youtube.com/embed/${v.id}?autoplay=1`;
+}
+else if(v.type==='drive'){
+url=`https://drive.google.com/file/d/${v.id}/preview`;
+}
+else{
+url=v.url;
+}
+
+document.getElementById('ytplayer').src=url;
+}
+
+function playVideo(i){
+showAd(()=>startVideo(i));
+}
+
+function nextVideo(){
+let i=(currentIndex+1)%filtered.length;
+showAd(()=>startVideo(i));
+}
+
+function prevVideo(){
+let i=(currentIndex-1+filtered.length)%filtered.length;
+startVideo(i);
+}
+
+function closePlayer(){
+document.getElementById('player').style.display='none';
+document.getElementById('ytplayer').src='';
+}
+
+// ========= DOWNLOAD =========
+
+function downloadVideo(){
+showAd(()=>doDownload());
+}
+
+function doDownload(){
+let v=filtered[currentIndex];
+
+if(v.type==='drive'){
+window.open(`https://drive.google.com/uc?export=download&id=${v.id}`,'_blank');
+}
+else if(v.type==='iptv'){
+window.open(v.url,'_blank');
+}
+else{
+alert("YouTube download not supported");
+}
+}
+
+// ========= AD =========
+
+let adLink="https://www.profitablecpmratenetwork.com/gzywu16wk?key=ca82fe8f794a452da2f57a8630e672b3";
+
+function showAd(callback){
+document.getElementById('adOverlay').style.display='flex';
+window.open(adLink,'_blank');
+window.adCallback=callback;
+
+let timeLeft=5;
+let p=document.querySelector('#adOverlay p');
+let btn=document.getElementById('skipBtn');
+
+btn.style.display='none';
+p.innerText=`Ad will close in ${timeLeft} seconds...`;
+
+let timer=setInterval(()=>{
+timeLeft--;
+if(timeLeft>0){
+p.innerText=`Ad will close in ${timeLeft} seconds...`;
+}
+else{
+p.innerText=`You can now skip the ad`;
+btn.style.display='block';
+clearInterval(timer);
+}
+},1000);
+}
+
+function closeAd(){
+document.getElementById('adOverlay').style.display='none';
+document.getElementById('skipBtn').style.display='none';
+if(window.adCallback) window.adCallback();
+}
+
+// ========= INIT =========
+
+async function init(){
+await loadYouTube();
+loadDrive();
+loadIPTV();
+showHome();
+}
+
+init();
+
+</script>
+</body>
+</html>
