@@ -70,11 +70,13 @@ button{padding:8px;background:red;color:white;border:none;border-radius:5px;curs
 
 // ================= DATA =================
 const YT_IDS = [
-"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","7pArhkQ9Q_g","4jtbe0I1e1c","e1-5kFNbNWc","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0","YQvz0-3e2Bw"
+"m0D713JAHaQ",
+"VLlsIoHHL50",
+"EiDNpufhRbs"
 ];
 
 const DRIVE_VIDEOS = [
-{ id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8', title:'soldar', cat:'fun',thumb: 'https://ibb.co.com/sdgHX5FP' },
+{ id:'AAA111', title:'Drive Movie 1', cat:'fun' },
 { id:'BBB222', title:'Drive Movie 2', cat:'tech' }
 ];
 
@@ -82,7 +84,7 @@ const IPTV_STREAMS = [
 { url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", title:"Live TV Demo", cat:'fun' }
 ];
 
-// ================= LIST =================
+// ================= STATE =================
 let homeVideos = [];
 let liveVideos = [];
 let videos = [];
@@ -90,17 +92,37 @@ let filtered = [];
 let currentIndex = 0;
 let currentCategory = "all";
 
-// ================= FIX: YouTube LOAD (NO OMBED) =================
-function loadYouTube(){
-YT_IDS.forEach(id=>{
-homeVideos.push({
-type:'yt',
-id:id,
-title:`YouTube Video`,
-cat:'music',
-thumb:`https://img.youtube.com/vi/${id}/0.jpg`
-});
-});
+// ================= YOUTUBE LOAD (FIXED oEmbed) =================
+async function loadYouTube(){
+
+  for (let id of YT_IDS) {
+    try {
+      let res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
+      );
+
+      let data = await res.json();
+
+      homeVideos.push({
+        type:'yt',
+        id:id,
+        title: data.title,
+        cat:'music',
+        thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+      });
+
+    } catch (e) {
+      homeVideos.push({
+        type:'yt',
+        id:id,
+        title:'YouTube Video',
+        cat:'music',
+        thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+      });
+    }
+  }
+
+  applyFilters();
 }
 
 // ================= DRIVE =================
@@ -144,6 +166,7 @@ applyFilters();
 
 // ================= FILTER =================
 function applyFilters(){
+
 let search = document.getElementById('search').value.toLowerCase();
 
 filtered = videos.filter(v=>{
@@ -164,6 +187,7 @@ document.getElementById('search').addEventListener('input',applyFilters);
 
 // ================= RENDER =================
 function render(){
+
 let grid=document.getElementById('videoGrid');
 grid.innerHTML='';
 
@@ -174,10 +198,12 @@ div.innerHTML=`<img src="${v.thumb}"><div class="title">${v.title}</div>`;
 div.onclick=()=>playVideo(i);
 grid.appendChild(div);
 });
+
 }
 
 // ================= PLAYER =================
 function startVideo(i){
+
 currentIndex=i;
 document.getElementById('player').style.display='flex';
 
@@ -233,10 +259,11 @@ alert("YouTube download not supported");
 }
 }
 
-// ================= AD =================
-let adLink="https://www.profitablecpmratenetwork.com/gzywu16wk?key=ca82fe8f794a452da2f57a8630e672b3";
+// ================= AD SYSTEM =================
+let adLink="https://example-ad-link.com";
 
 function showAd(callback){
+
 document.getElementById('adOverlay').style.display='flex';
 window.open(adLink,'_blank');
 window.adCallback=callback;
@@ -249,16 +276,19 @@ btn.style.display='none';
 p.innerText=`Ad will close in ${timeLeft} seconds...`;
 
 let timer=setInterval(()=>{
+
 timeLeft--;
+
 if(timeLeft>0){
 p.innerText=`Ad will close in ${timeLeft} seconds...`;
-}
-else{
+}else{
 p.innerText=`You can now skip the ad`;
 btn.style.display='block';
 clearInterval(timer);
 }
+
 },1000);
+
 }
 
 function closeAd(){
@@ -267,16 +297,17 @@ document.getElementById('skipBtn').style.display='none';
 if(window.adCallback) window.adCallback();
 }
 
-// ================= INIT (FIXED) =================
-function init(){
-loadYouTube();
+// ================= INIT =================
+async function init(){
+await loadYouTube();
 loadDrive();
 loadIPTV();
-showHome(); // always HOME
+showHome();
 }
 
 init();
 
 </script>
+
 </body>
 </html>
