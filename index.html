@@ -73,9 +73,20 @@ const YT_IDS = [
 "x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","7pArhkQ9Q_g","4jtbe0I1e1c","e1-5kFNbNWc","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0"
 ];
 
+// ✅ MANUAL THUMBNAIL SYSTEM
 const DRIVE_VIDEOS = [
-{ id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8', title:'সোলজার', cat:'fun',thumb: "https://i.ibb.co/YBGjDTSH/Whats-App-Image.jpg" },
-{ id:'d/17ORdpO3KVLIWu2jrFYTQkgwWsBQ3pk1c', title:'অ্যাকসান', cat:'tech' }
+{ 
+  id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8', 
+  title:'সোলজার', 
+  cat:'fun',
+  thumb:"https://i.postimg.cc/zvPNKsk4/MV5BOWE4Mjg2Mz-Yt-ODcz-MC00Yj-Uz-LTg4NDEt-Nzcw-NGI1Nj-Vk-Yj-Mw-Xk-Ey-Xk-Fqc-Gc-V1-QL75-UY281-CR4-0-1.jpg"
+},
+{ 
+  id:'17ORdpO3KVLIWu2jrFYTQkgwWsBQ3pk1c', 
+  title:'অ্যাকসান', 
+  cat:'tech',
+  thumb:"https://i.ibb.co/3WZQ9kG/video.png"
+}
 ];
 
 const IPTV_STREAMS = [
@@ -90,49 +101,45 @@ let filtered = [];
 let currentIndex = 0;
 let currentCategory = "all";
 
-// ================= YOUTUBE LOAD (FIXED oEmbed) =================
+// ================= YOUTUBE =================
 async function loadYouTube(){
+for (let id of YT_IDS) {
+try {
+let res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+let data = await res.json();
 
-  for (let id of YT_IDS) {
-    try {
-      let res = await fetch(
-        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`
-      );
-
-      let data = await res.json();
-
-      homeVideos.push({
-        type:'yt',
-        id:id,
-        title: data.title,
-        cat:'music',
-        thumb:`https://img.youtube.com/vi/${id}/0.jpg`
-      });
-
-    } catch (e) {
-      homeVideos.push({
-        type:'yt',
-        id:id,
-        title:'YouTube Video',
-        cat:'music',
-        thumb:`https://img.youtube.com/vi/${id}/0.jpg`
-      });
-    }
-  }
-
-  applyFilters();
+homeVideos.push({
+type:'yt',
+id:id,
+title:data.title,
+cat:'music',
+thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+});
+} catch {
+homeVideos.push({
+type:'yt',
+id:id,
+title:'YouTube Video',
+cat:'music',
+thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+});
+}
+}
+applyFilters();
 }
 
-// ================= DRIVE =================
+// ================= DRIVE (MANUAL THUMB) =================
 function loadDrive(){
 DRIVE_VIDEOS.forEach(v=>{
+
 homeVideos.push({
 type:'drive',
 id:v.id,
 title:v.title,
 cat:v.cat,
-thumb:'https://i.ibb.co/3WZQ9kG/video.png'
+thumb: v.thumb ? v.thumb : 'https://i.ibb.co/3WZQ9kG/video.png'
 });
+
 });
 }
 
@@ -164,7 +171,6 @@ applyFilters();
 
 // ================= FILTER =================
 function applyFilters(){
-
 let search = document.getElementById('search').value.toLowerCase();
 
 filtered = videos.filter(v=>{
@@ -185,7 +191,6 @@ document.getElementById('search').addEventListener('input',applyFilters);
 
 // ================= RENDER =================
 function render(){
-
 let grid=document.getElementById('videoGrid');
 grid.innerHTML='';
 
@@ -196,12 +201,10 @@ div.innerHTML=`<img src="${v.thumb}"><div class="title">${v.title}</div>`;
 div.onclick=()=>playVideo(i);
 grid.appendChild(div);
 });
-
 }
 
 // ================= PLAYER =================
 function startVideo(i){
-
 currentIndex=i;
 document.getElementById('player').style.display='flex';
 
@@ -261,7 +264,6 @@ alert("YouTube download not supported");
 let adLink="https://www.profitablecpmratenetwork.com/gzywu16wk?key=ca82fe8f794a452da2f57a8630e672b3";
 
 function showAd(callback){
-
 document.getElementById('adOverlay').style.display='flex';
 window.open(adLink,'_blank');
 window.adCallback=callback;
@@ -274,7 +276,6 @@ btn.style.display='none';
 p.innerText=`Ad will close in ${timeLeft} seconds...`;
 
 let timer=setInterval(()=>{
-
 timeLeft--;
 
 if(timeLeft>0){
@@ -284,9 +285,7 @@ p.innerText=`You can now skip the ad`;
 btn.style.display='block';
 clearInterval(timer);
 }
-
 },1000);
-
 }
 
 function closeAd(){
