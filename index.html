@@ -68,23 +68,21 @@ button{padding:8px;background:red;color:white;border:none;border-radius:5px;curs
 
 <script>
 
-// ========= DATA =========
-
+// ================= DATA =================
 const YT_IDS = [
-"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","7pArhkQ9Q_g","4jtbe0I1e1c","e1-5kFNbNWc","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0"
+"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","7pArhkQ9Q_g","4jtbe0I1e1c","e1-5kFNbNWc","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0","YQvz0-3e2Bw"
 ];
 
 const DRIVE_VIDEOS = [
-{ id:'AAA111', title:'Drive Movie 1', cat:'fun' },
+{ id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8', title:'soldar', cat:'fun',thumb: 'https://ibb.co.com/sdgHX5FP' },
 { id:'BBB222', title:'Drive Movie 2', cat:'tech' }
 ];
 
 const IPTV_STREAMS = [
-{ url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", title:"Live TV Demo", cat:"fun" }
+{ url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", title:"Live TV Demo", cat:'fun' }
 ];
 
-// ========= MASTER LIST =========
-
+// ================= LIST =================
 let homeVideos = [];
 let liveVideos = [];
 let videos = [];
@@ -92,23 +90,20 @@ let filtered = [];
 let currentIndex = 0;
 let currentCategory = "all";
 
-// ========= LOAD DATA =========
-
-async function loadYouTube(){
-for(const id of YT_IDS){
-let res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
-let data = await res.json();
-
+// ================= FIX: YouTube LOAD (NO OMBED) =================
+function loadYouTube(){
+YT_IDS.forEach(id=>{
 homeVideos.push({
 type:'yt',
-id,
-title:data.title,
+id:id,
+title:`YouTube Video`,
 cat:'music',
 thumb:`https://img.youtube.com/vi/${id}/0.jpg`
 });
-}
+});
 }
 
+// ================= DRIVE =================
 function loadDrive(){
 DRIVE_VIDEOS.forEach(v=>{
 homeVideos.push({
@@ -121,6 +116,7 @@ thumb:'https://i.ibb.co/3WZQ9kG/video.png'
 });
 }
 
+// ================= IPTV =================
 function loadIPTV(){
 IPTV_STREAMS.forEach(v=>{
 liveVideos.push({
@@ -133,41 +129,40 @@ thumb:'https://i.ibb.co/3WZQ9kG/video.png'
 });
 }
 
-// ========= MODE SWITCH =========
-
+// ================= MODE =================
 function showHome(){
 videos = homeVideos;
+currentCategory='all';
 applyFilters();
 }
 
 function showLiveTV(){
 videos = liveVideos;
+currentCategory='all';
 applyFilters();
 }
 
-// ========= FILTER =========
-
+// ================= FILTER =================
 function applyFilters(){
 let search = document.getElementById('search').value.toLowerCase();
 
 filtered = videos.filter(v=>{
-let matchCategory = (currentCategory==='all' || v.cat===currentCategory);
-let matchSearch = v.title.toLowerCase().includes(search) || v.cat.toLowerCase().includes(search);
-return matchCategory && matchSearch;
+let c = (currentCategory==='all' || v.cat===currentCategory);
+let s = v.title.toLowerCase().includes(search) || v.cat.toLowerCase().includes(search);
+return c && s;
 });
 
 render();
 }
 
 function setCategory(c){
-currentCategory = c;
+currentCategory=c;
 applyFilters();
 }
 
 document.getElementById('search').addEventListener('input',applyFilters);
 
-// ========= RENDER =========
-
+// ================= RENDER =================
 function render(){
 let grid=document.getElementById('videoGrid');
 grid.innerHTML='';
@@ -181,8 +176,7 @@ grid.appendChild(div);
 });
 }
 
-// ========= PLAYER =========
-
+// ================= PLAYER =================
 function startVideo(i){
 currentIndex=i;
 document.getElementById('player').style.display='flex';
@@ -203,9 +197,7 @@ url=v.url;
 document.getElementById('ytplayer').src=url;
 }
 
-function playVideo(i){
-showAd(()=>startVideo(i));
-}
+function playVideo(i){ showAd(()=>startVideo(i)); }
 
 function nextVideo(){
 let i=(currentIndex+1)%filtered.length;
@@ -222,8 +214,7 @@ document.getElementById('player').style.display='none';
 document.getElementById('ytplayer').src='';
 }
 
-// ========= DOWNLOAD =========
-
+// ================= DOWNLOAD =================
 function downloadVideo(){
 showAd(()=>doDownload());
 }
@@ -242,8 +233,7 @@ alert("YouTube download not supported");
 }
 }
 
-// ========= AD =========
-
+// ================= AD =================
 let adLink="https://www.profitablecpmratenetwork.com/gzywu16wk?key=ca82fe8f794a452da2f57a8630e672b3";
 
 function showAd(callback){
@@ -277,13 +267,12 @@ document.getElementById('skipBtn').style.display='none';
 if(window.adCallback) window.adCallback();
 }
 
-// ========= INIT =========
-
-async function init(){
-await loadYouTube();
+// ================= INIT (FIXED) =================
+function init(){
+loadYouTube();
 loadDrive();
 loadIPTV();
-showHome();
+showHome(); // always HOME
 }
 
 init();
