@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SDBD</title>
+<title>StreamTube Pro Auto</title>
 <link rel="icon" type="image/jpeg" href="https://i.ibb.co.com/zWYxwgPk/favicon.jpg">
 
 <style>
@@ -71,7 +71,7 @@ button{padding:8px;background:red;color:white;border:none;border-radius:5px;curs
 <script>
 
 const YT_IDS = [
-"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","4jtbe0I1e1c","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0","YQvz0-3e2Bw","bHJ3qIrVF8A","E-dk8ii4uXA","qqaGksZmZO8","MxPIpiUogL4",
+"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs","4jtbe0I1e1c","aVTjBBAiIy0","7MwCamRDxKg","sSb9s3r45FI","4CM3oBgL194","HMW3OeNif5k","nE68cipbGb0","YQvz0-3e2Bw","bHJ3qIrVF8A","E-dk8ii4uXA"
 ];
 
 const DRIVE_VIDEOS = [
@@ -250,6 +250,10 @@ showHome();
 }
 
 init();
+
+// 🔥 GLOBAL FIX: ensure newest video always on top across ALL lists
+homeVideos.sort((a,b)=>(b._order||0)-(a._order||0));
+liveVideos.sort((a,b)=>(b._order||0)-(a._order||0));
 
 </script>
 
