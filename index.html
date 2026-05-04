@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamTube Pro Auto</title>
 
-<!-- ✅ FIXED FAVICON -->
 <link rel="icon" href="https://i.ibb.co/zWYxwgPk/favicon.jpg">
-<link rel="shortcut icon" href="https://i.ibb.co/zWYxwgPk/favicon.jpg">
 
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:white}
@@ -49,13 +46,11 @@ box-shadow:0 0 15px rgba(255,0,0,0.5);
 }
 
 .video img{width:100%;height:130px;object-fit:cover}
-
 .title{padding:6px;font-size:13px}
 
 #player{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:#000;display:none;flex-direction:column;z-index:1000;
-animation:fadeIn 0.3s ease;
 }
 
 iframe{width:100%;height:85%;border:none}
@@ -63,7 +58,7 @@ iframe{width:100%;height:85%;border:none}
 .controls{
 position:absolute;bottom:20px;left:50%;
 transform:translateX(-50%);
-display:flex;gap:10px
+display:flex;gap:10px;align-items:center;
 }
 
 button{
@@ -72,15 +67,15 @@ border-radius:20px;cursor:pointer;
 }
 button:hover{background:red}
 
+select{
+background:#222;color:white;border:none;padding:6px;border-radius:10px;
+}
+
 #adOverlay{
 position:fixed;top:0;left:0;width:100%;height:100%;
 background:black;display:none;justify-content:center;
 align-items:center;flex-direction:column;z-index:2000;
 text-align:center;padding:20px
-}
-
-@keyframes fadeIn{
-from{opacity:0}to{opacity:1}
 }
 </style>
 </head>
@@ -91,7 +86,7 @@ from{opacity:0}to{opacity:1}
 <div class="logo">🎬 SDBD</div>
 <button onclick="showHome()">Home</button>
 <button onclick="showLiveTV()">Live TV</button>
-<input id="search" class="search" placeholder="Search videos...">
+<input id="search" class="search" placeholder="Search...">
 </div>
 
 <div class="categories">
@@ -105,88 +100,64 @@ from{opacity:0}to{opacity:1}
 
 <div id="player">
 <iframe id="ytplayer" allow="autoplay"></iframe>
+
 <div class="controls">
 <button onclick="prevVideo()">Prev</button>
+
+<select id="driveQualitySelect" style="display:none" onchange="setDriveQuality()"></select>
+
 <button onclick="downloadVideo()">Download</button>
 <button onclick="closePlayer()">Close</button>
 <button onclick="nextVideo()">Next ▶</button>
 </div>
 </div>
 
-<div id="adOverlay">
-<h2>Advertisement</h2>
-<p>Ad will close in 5 seconds...</p>
-<button id="skipBtn" onclick="closeAd()" style="display:none">Skip Ad</button>
-</div>
-
 <script>
 
 // ================= DATA =================
-const YT_IDS=[
-"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs"
-];
+const YT_IDS=["x2SeyqGjySs","iXxg3DYaafo"];
 
 const DRIVE_VIDEOS=[
 {
-id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8',
 title:'Major',
 cat:'fun',
-thumb:"https://i.postimg.cc/zvPNKsk4/MV5B.jpg"
+thumb:"https://i.postimg.cc/zvPNKsk4/MV5B.jpg",
+qualities:[
+{label:"720p",id:"18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8"},
+{label:"1080p",id:"18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8"}
+]
 }
 ];
 
-const IPTV_STREAMS=[
-{
-url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-title:"Somay TV",
-cat:'fun'
-}
-];
+const IPTV_STREAMS=[];
 
 // ================= STATE =================
 let homeVideos=[],liveVideos=[],videos=[],filtered=[];
 let currentIndex=0,currentCategory="all";
+let selectedDriveId=null;
 
-// ================= YOUTUBE =================
+// ================= LOAD =================
 async function loadYouTube(){
-for (let id of YT_IDS) {
-try {
-let res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
-let data = await res.json();
-
+for(let id of YT_IDS){
 homeVideos.unshift({
 type:'yt',
-id:id,
-title:data.title,
+id,
+title:"YouTube Video",
 cat:'music',
 thumb:`https://img.youtube.com/vi/${id}/0.jpg`
 });
-
-} catch {
-homeVideos.unshift({
-type:'yt',
-id:id,
-title:'YouTube Video',
-cat:'music',
-thumb:`https://img.youtube.com/vi/${id}/0.jpg`
-});
-}
 }
 applyFilters();
 }
 
-// ================= DRIVE =================
 function loadDrive(){
 DRIVE_VIDEOS.forEach(v=>{
 homeVideos.unshift({...v,type:'drive'});
 });
 }
 
-// ================= IPTV =================
 function loadIPTV(){
-IPTV_STREAMS.forEach(v=>{
-liveVideos.unshift({...v,type:'iptv'});
-});
+liveVideos=[];
 }
 
 // ================= MODE =================
@@ -199,7 +170,7 @@ let s=document.getElementById('search').value.toLowerCase();
 
 filtered=videos.filter(v=>
 (currentCategory==='all'||v.cat===currentCategory) &&
-(v.title.toLowerCase().includes(s) || v.cat.toLowerCase().includes(s))
+v.title.toLowerCase().includes(s)
 );
 
 render();
@@ -218,10 +189,7 @@ let div=document.createElement('div');
 div.className='video';
 
 div.innerHTML=`
-<div style="position:relative">
 <img src="${v.thumb}">
-<span style="position:absolute;bottom:5px;right:5px;background:black;padding:2px 5px;font-size:10px">HD</span>
-</div>
 <div class="title">${v.title}</div>
 `;
 
@@ -235,74 +203,71 @@ function startVideo(i){
 currentIndex=i;
 document.getElementById('player').style.display='flex';
 
-let v=filtered[i],url='';
+let v=filtered[i];
+let url='';
 
 if(v.type==='yt'){
-url=`https://www.youtube.com/embed/${v.id}?autoplay=1&enablejsapi=1`;
+url=`https://www.youtube.com/embed/${v.id}?autoplay=1`;
+document.getElementById('driveQualitySelect').style.display='none';
 }
+
 else if(v.type==='drive'){
-url=`https://drive.google.com/file/d/${v.id}/preview`;
-}
-else{
-url=v.url;
+document.getElementById('driveQualitySelect').style.display='block';
+document.getElementById('driveQualitySelect').innerHTML='';
+
+v.qualities.forEach(q=>{
+let opt=document.createElement('option');
+opt.value=q.id;
+opt.textContent=q.label;
+document.getElementById('driveQualitySelect').appendChild(opt);
+});
+
+selectedDriveId=v.qualities[0].id;
+url=`https://drive.google.com/file/d/${selectedDriveId}/preview`;
+document.getElementById('driveQualitySelect').value=selectedDriveId;
 }
 
 document.getElementById('ytplayer').src=url;
 }
 
-function playVideo(i){showAd(()=>startVideo(i))}
-function nextVideo(){showAd(()=>startVideo((currentIndex+1)%filtered.length))}
-function prevVideo(){startVideo((currentIndex-1+filtered.length)%filtered.length)}
+function playVideo(i){startVideo(i)}
+
+function nextVideo(){
+startVideo((currentIndex+1)%filtered.length);
+}
+
+function prevVideo(){
+startVideo((currentIndex-1+filtered.length)%filtered.length);
+}
 
 function closePlayer(){
 document.getElementById('player').style.display='none';
 document.getElementById('ytplayer').src='';
 }
 
-// ================= AUTO NEXT =================
-let player;
+// ================= DRIVE QUALITY =================
+function setDriveQuality(){
+selectedDriveId=document.getElementById('driveQualitySelect').value;
 
-function onYouTubeIframeAPIReady(){
-player=new YT.Player('ytplayer',{
-events:{'onStateChange':onPlayerStateChange}
-});
+let url=`https://drive.google.com/file/d/${selectedDriveId}/preview`;
+document.getElementById('ytplayer').src=url;
 }
 
-function onPlayerStateChange(e){
-if(e.data===0) nextVideo();
+// ================= DOWNLOAD =================
+function downloadVideo(){
+let v=filtered[currentIndex];
+
+if(v.type==='drive'){
+let url=`https://drive.google.com/uc?export=download&id=${selectedDriveId}`;
+let a=document.createElement('a');
+a.href=url;
+a.target="_blank";
+a.click();
 }
 
-let tag=document.createElement('script');
-tag.src="https://www.youtube.com/iframe_api";
-document.body.appendChild(tag);
-
-// ================= AD =================
-let adLink="https://www.profitablecpmratenetwork.com";
-
-function showAd(callback){
-document.getElementById('adOverlay').style.display='flex';
-window.open(adLink,'_blank');
-window.adCallback=callback;
-
-let t=5,p=document.querySelector('#adOverlay p');
-let btn=document.getElementById('skipBtn');
-btn.style.display='none';
-
-let timer=setInterval(()=>{
-t--;
-if(t>0){
-p.innerText=`Ad will close in ${t} seconds...`;
-}else{
-p.innerText="You can now skip";
-btn.style.display='block';
-clearInterval(timer);
+else{
+alert("Download not supported");
 }
-},1000);
-}
-
-function closeAd(){
-document.getElementById('adOverlay').style.display='none';
-if(window.adCallback) window.adCallback();
 }
 
 // ================= INIT =================
@@ -318,4 +283,3 @@ init();
 
 </body>
 </html>
-```
