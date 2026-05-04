@@ -6,6 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamTube Pro Auto</title>
 
+<!-- ✅ FIXED FAVICON -->
+<link rel="icon" href="https://i.ibb.co/zWYxwgPk/favicon.jpg">
+<link rel="shortcut icon" href="https://i.ibb.co/zWYxwgPk/favicon.jpg">
+
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:white}
 
@@ -118,37 +122,67 @@ from{opacity:0}to{opacity:1}
 <script>
 
 // ================= DATA =================
-const YT_IDS=["x2SeyqGjySs","iXxg3DYaafo"];
+const YT_IDS=[
+"x2SeyqGjySs","iXxg3DYaafo","EiDNpufhRbs"
+];
 
 const DRIVE_VIDEOS=[
-{id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8',title:'Major',cat:'fun',thumb:"https://i.postimg.cc/zvPNKsk4/MV5B.jpg"}
+{
+id:'18xsDHkCxJOFgQgxVXJuTBJ2c8McoZN-8',
+title:'Major',
+cat:'fun',
+thumb:"https://i.postimg.cc/zvPNKsk4/MV5B.jpg"
+}
 ];
 
 const IPTV_STREAMS=[
-{url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",title:"Somay TV",cat:'fun'}
+{
+url:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+title:"Somay TV",
+cat:'fun'
+}
 ];
 
 // ================= STATE =================
 let homeVideos=[],liveVideos=[],videos=[],filtered=[];
 let currentIndex=0,currentCategory="all";
 
-// ================= LOAD =================
+// ================= YOUTUBE =================
 async function loadYouTube(){
-for(let id of YT_IDS){
+for (let id of YT_IDS) {
+try {
+let res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+let data = await res.json();
+
 homeVideos.unshift({
-type:'yt',id,title:'YouTube Video',cat:'music',
+type:'yt',
+id:id,
+title:data.title,
+cat:'music',
 thumb:`https://img.youtube.com/vi/${id}/0.jpg`
 });
+
+} catch {
+homeVideos.unshift({
+type:'yt',
+id:id,
+title:'YouTube Video',
+cat:'music',
+thumb:`https://img.youtube.com/vi/${id}/0.jpg`
+});
+}
 }
 applyFilters();
 }
 
+// ================= DRIVE =================
 function loadDrive(){
 DRIVE_VIDEOS.forEach(v=>{
 homeVideos.unshift({...v,type:'drive'});
 });
 }
 
+// ================= IPTV =================
 function loadIPTV(){
 IPTV_STREAMS.forEach(v=>{
 liveVideos.unshift({...v,type:'iptv'});
@@ -162,10 +196,12 @@ function showLiveTV(){videos=liveVideos;applyFilters()}
 // ================= FILTER =================
 function applyFilters(){
 let s=document.getElementById('search').value.toLowerCase();
+
 filtered=videos.filter(v=>
 (currentCategory==='all'||v.cat===currentCategory) &&
-v.title.toLowerCase().includes(s)
+(v.title.toLowerCase().includes(s) || v.cat.toLowerCase().includes(s))
 );
+
 render();
 }
 
@@ -180,6 +216,7 @@ grid.innerHTML='';
 filtered.forEach((v,i)=>{
 let div=document.createElement('div');
 div.className='video';
+
 div.innerHTML=`
 <div style="position:relative">
 <img src="${v.thumb}">
@@ -187,6 +224,7 @@ div.innerHTML=`
 </div>
 <div class="title">${v.title}</div>
 `;
+
 div.onclick=()=>playVideo(i);
 grid.appendChild(div);
 });
