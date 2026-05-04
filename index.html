@@ -10,13 +10,7 @@
 body{margin:0;font-family:Arial;background:#0b0b0b;color:white}
 .navbar{display:flex;gap:10px;align-items:center;padding:10px;background:#000}
 .logo{color:red;font-size:20px;font-weight:bold}
-.search{
-flex:0.6;
-max-width:220px;
-padding:8px;
-border-radius:5px;
-border:none;
-}
+.search{flex:0.6;max-width:220px;padding:8px;border-radius:5px;border:none}
 .categories{display:flex;gap:10px;padding:10px;overflow:auto}
 .cat{background:#222;padding:6px 12px;border-radius:20px;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:8px}
@@ -130,29 +124,29 @@ applyFilters();
 }
 
 function loadDrive(){
-DRIVE_VIDEOS.forEach(v=>{
+for (let v of DRIVE_VIDEOS) {
 homeVideos.push({
 type:'drive',
 id:v.id,
 title:v.title,
 cat:v.cat,
-thumb:v.thumb || 'https://i.ibb.co/3WZQ9kG/video.png',
+thumb: v.thumb ? v.thumb : 'https://i.ibb.co/3WZQ9kG/video.png',
 _order: globalOrder++
 });
-});
+}
 }
 
 function loadIPTV(){
-IPTV_STREAMS.forEach(v=>{
+for (let v of IPTV_STREAMS) {
 liveVideos.push({
 type:'iptv',
 url:v.url,
 title:v.title,
 cat:v.cat,
-thumb:v.thumb || 'https://i.ibb.co/3WZQ9kG/video.png',
+thumb: v.thumb ? v.thumb : 'https://i.ibb.co/3WZQ9kG/video.png',
 _order: globalOrder++
 });
-});
+}
 }
 
 function showHome(){ videos = homeVideos; currentCategory='all'; applyFilters(); }
@@ -161,14 +155,13 @@ function showLiveTV(){ videos = liveVideos; currentCategory='all'; applyFilters(
 function applyFilters(){
 let search = document.getElementById('search').value.toLowerCase();
 
-filtered = videos.filter(v=>{
+let sortedVideos = [...videos].sort((a,b)=>(b._order||0)-(a._order||0));
+
+filtered = sortedVideos.filter(v=>{
 let c = (currentCategory==='all' || v.cat===currentCategory);
 let s = v.title.toLowerCase().includes(search) || v.cat.toLowerCase().includes(search);
 return c && s;
 });
-
-// 🔥 NEW: latest videos first
-filtered.sort((a,b)=>b._order - a._order);
 
 render();
 }
